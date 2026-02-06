@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,37 +8,39 @@ import {
   SafeAreaView,
   Alert,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { deleteProfile } from './profileStorage';
 
 const ProfileScreen = ({ route, navigation }) => {
-  const { userData, plan, gamification } = route.params;
+  const { userData, plan, gamification, profileId } = route.params ?? {};
+  
+  useEffect(() => {
+    if (!userData || !plan || !gamification || !profileId) {
+      navigation.goBack();
+    }
+  }, [userData, plan, gamification, profileId, navigation]);
+  
+  if (!userData || !plan || !gamification || !profileId) {
+    return null;
+  }
 
-  const resetAllData = async () => {
+  const handleDeleteProfile = () => {
     Alert.alert(
-      'Reset Everything',
-      'This will delete all your data and restart from scratch. Are you sure?',
+      'Delete Profile',
+      `Are you sure you want to delete "${userData.name}"? All data will be permanently lost.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Reset',
+          text: 'Delete',
           style: 'destructive',
           onPress: async () => {
             try {
-              await AsyncStorage.multiRemove([
-                'userData',
-                'userPlan',
-                'todayMeals',
-                'lastSaveDate',
-                'gamification',
-                'favoriteMeals',
-                'waterIntake',
-              ]);
+              await deleteProfile(profileId);
               navigation.reset({
                 index: 0,
-                routes: [{ name: 'OnboardingSurvey' }],
+                routes: [{ name: 'ProfileSelector' }],
               });
             } catch (error) {
-              console.error('Error resetting data:', error);
+              console.error('Error deleting profile:', error);
             }
           },
         },
@@ -246,9 +248,9 @@ const ProfileScreen = ({ route, navigation }) => {
           </View>
         )}
 
-        {/* Reset Button */}
-        <TouchableOpacity style={styles.resetButton} onPress={resetAllData}>
-          <Text style={styles.resetButtonText}>🔄 Reset All Data</Text>
+        {/* Delete Profile Button */}
+        <TouchableOpacity style={styles.resetButton} onPress={handleDeleteProfile}>
+          <Text style={styles.resetButtonText}>🗑️ Delete Profile</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
