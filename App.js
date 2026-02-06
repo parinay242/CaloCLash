@@ -54,6 +54,7 @@ export default function App() {
         initialRouteName={initialRoute}
         screenOptions={{
           headerShown: false,
+          cardStyle: { flex: 1 },
         }}
       >
         <Stack.Screen 

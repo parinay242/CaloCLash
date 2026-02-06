@@ -707,7 +707,7 @@ const OnboardingSurvey = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.progressContainer}>
           <Text style={styles.progressText}>Step {step} of 12</Text>
           <View style={styles.progressBar}>
@@ -758,6 +758,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  scrollView: {
+    flex: 1,
   },
   scrollContent: {
     padding: 20,
