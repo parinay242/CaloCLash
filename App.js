@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import OnboardingSurvey from './OnboardingSurvey';
 import CalorieTracker from './CalorieTracker';
 import ProfileScreen from './ProfileScreen';
-import ProfileSelector from './ProfileSelector';
-import { migrateFromLegacy, getProfiles, getActiveProfileId } from './profileStorage';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
 const Stack = createStackNavigator();
@@ -13,7 +12,8 @@ const Stack = createStackNavigator();
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [initialRoute, setInitialRoute] = useState('OnboardingSurvey');
-  const [initialParams, setInitialParams] = useState({});
+  const [userData, setUserData] = useState(null);
+  const [userPlan, setUserPlan] = useState(null);
 
   useEffect(() => {
     checkUserData();
@@ -21,26 +21,20 @@ export default function App() {
 
   const checkUserData = async () => {
     try {
-      await migrateFromLegacy();
-      const profiles = await getProfiles();
-      const activeId = await getActiveProfileId();
+      const savedUserData = await AsyncStorage.getItem('userData');
+      const savedPlan = await AsyncStorage.getItem('userPlan');
       
-      if (profiles.length === 0) {
-        setInitialRoute('OnboardingSurvey');
-      } else if (activeId) {
-        const profile = profiles.find(p => p.id === activeId);
-        if (profile) {
-          setInitialRoute('CalorieTracker');
-          setInitialParams({ profileId: activeId });
-        } else {
-          setInitialRoute('ProfileSelector');
-        }
+      if (savedUserData && savedPlan) {
+        // User has completed onboarding, go straight to tracker
+        setUserData(JSON.parse(savedUserData));
+        setUserPlan(JSON.parse(savedPlan));
+        setInitialRoute('CalorieTracker');
       } else {
-        setInitialRoute('ProfileSelector');
+        // New user, show onboarding
+        setInitialRoute('OnboardingSurvey');
       }
     } catch (error) {
       console.error('Error loading user data:', error);
-      setInitialRoute('OnboardingSurvey');
     } finally {
       setIsLoading(false);
     }
@@ -68,13 +62,9 @@ export default function App() {
           component={OnboardingSurvey} 
         />
         <Stack.Screen 
-          name="ProfileSelector" 
-          component={ProfileSelector}
-        />
-        <Stack.Screen 
           name="CalorieTracker" 
           component={CalorieTracker}
-          initialParams={initialParams}
+          initialParams={{ plan: userPlan, userData: userData }}
         />
         <Stack.Screen 
           name="ProfileScreen" 

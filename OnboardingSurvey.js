@@ -9,7 +9,7 @@ import {
   SafeAreaView,
   Alert,
 } from 'react-native';
-import { addProfile } from './profileStorage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const OnboardingSurvey = ({ navigation }) => {
   const [step, setStep] = useState(1);
@@ -163,25 +163,18 @@ const OnboardingSurvey = ({ navigation }) => {
     };
   };
 
-  const saveUserDataAndNavigate = async (plan) => {
+  const saveUserData = async (plan) => {
     try {
-      const profile = await addProfile(formData, plan);
-      navigation.reset({
-        index: 0,
-        routes: [
-          {
-            name: 'CalorieTracker',
-            params: { profileId: profile.id },
-          },
-        ],
-      });
+      await AsyncStorage.setItem('userData', JSON.stringify(formData));
+      await AsyncStorage.setItem('userPlan', JSON.stringify(plan));
+      console.log('User data saved successfully!');
     } catch (error) {
       console.error('Error saving user data:', error);
       Alert.alert('Error', 'Failed to save your data. Please try again.');
     }
   };
 
-  const handleNext = async () => {
+  const handleNext = () => {
     // Step 1: Disclaimer
     if (step === 1) {
       setStep(2);
@@ -256,8 +249,12 @@ const OnboardingSurvey = ({ navigation }) => {
     if (step < 12) {
       setStep(step + 1);
     } else {
+      // Calculate and save data
       const plan = calculateDailyCalories();
-      await saveUserDataAndNavigate(plan);
+      saveUserData(plan);
+      
+      // Navigate to tracker
+      navigation.navigate('CalorieTracker', { plan, userData: formData });
     }
   };
 
